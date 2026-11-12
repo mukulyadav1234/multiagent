@@ -1,12 +1,16 @@
-# AI Marketing Studio
+# AI Poster Studio
 
-Minimal local app that generates marketing posters using a three-agent pipeline and Google Gemini (text) + Playwright HTML rendering.
+Local app that turns any text request into a high-resolution image, using only text-to-text models: the models write HTML + inline SVG + CSS, and Chromium renders it.
 
-Overview
-- Backend: FastAPI (Python)
-- Frontend: Vite + React (minimal scaffold)
-- Agents: Analyzer, Creative Director, Code Writer (prompts in `prompts/`)
-- Rendering: Playwright + Chromium (render HTML to PNG/JPEG/PDF)
+Pipeline (prompts in `prompts/`)
+1. **Brief** (`analyzer.txt`): any request, even one word, -> structured brief. Never asks for a company or other details.
+2. **Creative Director** (`creative_director.txt`): brief -> layered shot plan (lighting, depth planes, materials, typography).
+3. **Code Writer** (`code_writer.txt`): plan -> HTML/SVG painting, using a realism toolkit (gradient shading, SVG lighting/turbulence filters, bloom, depth of field, grain, seeded procedural scripts, Google Fonts).
+4. **Compile**: render with Playwright, a vision **Reviewer** (`reviewer.txt`) critiques the PNG, the Code Writer revises (`REVIEW_ROUNDS`), then the final render.
+
+Output: PNG at 2x or 4x pixel density (1080x1350 -> 4320x5400), JPG, vector PDF, and the HTML source.
+
+Provider: Gemini by default (`GEMINI_API_KEY`), one model chain per agent via `GEMINI_MODEL_*` in `.env`. Set `LLM_PROVIDER=openrouter` to use OpenRouter instead (`MODEL_*`). All calls are streamed and fall through a model chain when one model is busy or out of quota.
 
 Quick setup (Linux)
 
@@ -36,5 +40,6 @@ npm run dev
 ```
 
 Notes
-- The code includes a small Gemini client wrapper that attempts to call the Generative REST endpoint. Verify your API key and model.
-- Tests exist in `tests/` and mock the LLM where appropriate.
+- A generation makes 4-5 model calls and takes roughly 2-5 minutes; the UI polls `/api/generations/{id}` and shows the current stage.
+- Renders are sandboxed: only Google Fonts may load.
+- Tests in `tests/` mock the LLM and renderer: `pytest -q`.

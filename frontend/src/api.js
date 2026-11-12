@@ -13,32 +13,36 @@ async function parseApiResponse(res) {
 
 const BASE = import.meta.env.VITE_BACKEND_BASE || ''
 
-export async function generatePoster(payload) {
-  const res = await fetch(`${BASE}/api/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  })
-
+async function request(path, options) {
+  const res = await fetch(`${BASE}${path}`, options)
   if (!res.ok) {
     const data = await parseApiResponse(res).catch(() => null)
-    throw new Error(data?.detail || `Request failed with status ${res.status}`)
+    const detail = Array.isArray(data?.detail) ? data.detail.map((d) => d.msg).join('; ') : data?.detail
+    throw new Error(detail || `Request failed with status ${res.status}`)
   }
-
   return parseApiResponse(res)
 }
 
-export async function recompilePoster(payload) {
-  const res = await fetch(`${BASE}/api/recompile`, {
+export function startGeneration(payload) {
+  return request('/api/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   })
+}
 
-  if (!res.ok) {
-    const data = await parseApiResponse(res).catch(() => null)
-    throw new Error(data?.detail || `Request failed with status ${res.status}`)
-  }
+export function getGeneration(generationId) {
+  return request(`/api/generations/${generationId}`)
+}
 
-  return parseApiResponse(res)
+export function recompilePoster(payload) {
+  return request('/api/recompile', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+}
+
+export function exportUrl(generationId, format, scale) {
+  return `${BASE}/api/artifacts/${generationId}/export?format=${format}&scale=${scale}`
 }

@@ -1,23 +1,14 @@
-from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from pydantic import BaseModel, Field
+from typing import Optional
 
 
 class GenerateRequest(BaseModel):
     prompt: str
-    width: Optional[int] = None
-    height: Optional[int] = None
+    width: Optional[int] = Field(None, ge=400, le=2400)
+    height: Optional[int] = Field(None, ge=400, le=2400)
     brand: Optional[str] = None
 
 
 class RecompileRequest(BaseModel):
     generation_id: str
     html: str
-    format: Optional[str] = "png"
-
-
-class GenerateResponse(BaseModel):
-    generation_id: str
-    analysis: Dict[str, Any]
-    creative: Dict[str, Any]
-    html: str
-    preview_url: str
